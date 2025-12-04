@@ -125,6 +125,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Save manual focus state to storage
     chrome.storage.local.set({ manualFocus: state.manualFocus });
     checkCalendarStatus(); // Re-evaluate blocking status
+  } else if (request.action === "getStats") {
+    // Return current stats for testing purposes
+    sendResponse(state.stats);
+    return true;
+  } else if (request.action === "resetStats") {
+    // Reset daily stats and update storage
+    state.stats = { blockedCount: 0, focusTimeMinutes: 0, focusTime: "0h 0m" };
+    const today = new Date().toDateString();
+    chrome.storage.local.set({ stats: state.stats, lastResetDate: today }, () => {
+      sendResponse({ success: true, message: "Stats reset for " + today });
+    });
+    return true;
   } else if (request.action === "getDynamicRules") {
     chrome.declarativeNetRequest.getDynamicRules((rules) => {
       console.log('Current dynamic rules:', rules);

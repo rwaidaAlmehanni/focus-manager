@@ -2,8 +2,7 @@
 .env
 
 # Manifest with real credentials
-manifest.json
-manifest.example.json
+# manifest.json (unignored)
 PUBLISHING_GUIDE.md
 TESTING_GUIDE.md
 
