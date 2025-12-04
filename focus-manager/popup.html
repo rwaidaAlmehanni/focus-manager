@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Manager</title>
+  <link rel="stylesheet" href="popup.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon"></div>
+        <h1>Focus Manager</h1>
+      </div>
+      <div class="status-badge" id="status-badge">
+        <span class="dot"></span>
+        <span class="text">Idle</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="card focus-state">
+        <div class="circle-indicator" id="focus-circle">
+          <div class="inner-circle">
+            <span id="timer">--:--</span>
+            <span class="label">Until Free</span>
+          </div>
+        </div>
+        <h2 id="current-event">No active meeting</h2>
+        <p id="next-event">Next: Daily Standup at 10:00 AM</p>
+        
+        <div class="manual-control">
+          <label class="switch">
+            <input type="checkbox" id="manual-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="switch-label">Manual Focus</span>
+        </div>
+      </section>
+
+      <section class="actions">
+        <button id="connect-btn" class="btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Sync Calendar
+        </button>
+      </section>
+
+      <section class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-value" id="blocked-count">0</span>
+          <span class="stat-label">Distractions Blocked</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="focus-time">0h</span>
+          <span class="stat-label">Focus Time Today</span>
+        </div>
+      </section>
+    </main>
+    
+    <footer>
+      <p>Focus Manager v1.1</p>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

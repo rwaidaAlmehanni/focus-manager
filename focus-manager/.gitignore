@@ -1,0 +1,15 @@
+# Environment variables
+.env
+
+# Manifest with real credentials
+manifest.json
+manifest.example.json
+PUBLISHING_GUIDE.md
+TESTING_GUIDE.md
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

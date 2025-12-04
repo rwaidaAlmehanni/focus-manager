@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Mode Active</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      background-size: 200% 200%;
+      animation: gradientShift 10s ease infinite;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+      top: -250px;
+      right: -250px;
+      animation: pulse 8s ease-in-out infinite;
+    }
+    
+    body::after {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+      bottom: -200px;
+      left: -200px;
+      animation: pulse 8s ease-in-out infinite 4s;
+    }
+    
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .icon {
+      font-size: 80px;
+      margin-bottom: 30px;
+      animation: float 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.5));
+    }
+    
+    h1 {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 15px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    p {
+      color: #94a3b8;
+      font-size: 18px;
+      max-width: 500px;
+      line-height: 1.6;
+      margin: 10px auto;
+    }
+    
+    .highlight {
+      color: #6366f1;
+      font-weight: 600;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.1); }
+    }
+    
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    @keyframes shimmer {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.2); }
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <div class="icon">🎯</div>
+    <h1>Focus Mode Active</h1>
+    <p>This site is blocked because you are currently in a <span class="highlight">focus session</span>.</p>
+    <p>Stay focused and get back to work! 💪</p>
+  </div>
+  <script src="blocked.js"></script>
+</body>
+</html>
