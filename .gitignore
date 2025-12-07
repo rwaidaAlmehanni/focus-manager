@@ -2,3 +2,16 @@
 focus-manager.zip
 focus_manager_package.zip
 *.zip
+
+# Environment variables
+.env
+
+# Manifest with real credentials
+# manifest.json (unignored)
+PUBLISHING_GUIDE.md
+TESTING_GUIDE.md
+PRIVACY_JUSTIFICATIONS.md
+
+# IDE
+.vscode/
+.idea/
