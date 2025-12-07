@@ -5,6 +5,7 @@
 # manifest.json (unignored)
 PUBLISHING_GUIDE.md
 TESTING_GUIDE.md
+PRIVACY_JUSTIFICATIONS.md
 
 # macOS
 .DS_Store

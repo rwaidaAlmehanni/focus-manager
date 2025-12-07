@@ -21,9 +21,7 @@ let state = {
     focusTimeMinutes: 0,
     focusTime: "0h 0m"
   },
-  isAuthenticated: false,
-  manualFocus: false,
-  calendarBlocking: false
+  manualFocus: false
 };
 
 // Load stats and state from storage
@@ -108,11 +106,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     
     sendResponse({ ...state, timeRemaining });
-  } else if (request.action === "authenticate") {
-    authenticateUser().then(success => {
-      sendResponse({ success });
-    });
-    return true; // Async response
+
   } else if (request.action === "incrementBlockedCount") {
     state.stats.blockedCount++;
     console.log('Distraction blocked! Count:', state.stats.blockedCount);
@@ -146,215 +140,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-// Authentication
-async function authenticateUser() {
-  if (SIMULATION_MODE) {
-    state.isAuthenticated = true;
-    checkCalendarStatus(); // Trigger an immediate check
-    return true;
-  }
 
-  try {
-    const token = await getAuthToken();
-    if (token) {
-      state.isAuthenticated = true;
-      checkCalendarStatus();
-      return true;
-    }
-  } catch (error) {
-    console.error("Auth failed:", error);
-  }
-  return false;
-}
-
-function getAuthToken() {
-  return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive: true }, (token) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-      } else {
-        resolve(token);
-      }
-    });
-  });
-}
-
-// Calendar Logic
-async function checkCalendarStatus() {
-  // if (!state.isAuthenticated) return; // Removed to allow Manual Focus without Auth
-
-  let events = [];
-  if (state.isAuthenticated) {
-    if (SIMULATION_MODE) {
-      events = getMockEvents();
-    } else {
-      events = await fetchGoogleCalendarEvents();
-    }
-  }
-
-  const now = new Date();
-  const current = events.find(e => now >= new Date(e.start) && now <= new Date(e.end));
-  const next = events.find(e => new Date(e.start) > now);
-
-  // Determine if we should be blocking (Calendar OR Manual)
-  const isCalendarActive = !!current;
-  const shouldBlock = isCalendarActive || state.manualFocus;
-
-  if (shouldBlock) {
-    if (!state.isBlocking) {
-      // Start Blocking
-      state.isBlocking = true;
-      
-      if (state.manualFocus) {
-        state.currentEvent = { 
-          summary: "Manual Focus Session", 
-          start: new Date().toISOString(),
-          end: null 
-        };
-      } else {
-        state.currentEvent = {
-          summary: current.summary,
-          end: current.end
-        };
-      }
-      
-      console.log('Starting focus mode blocking. Manual:', state.manualFocus);
-      updateBlockingRules(true);
-      
-      // Notify user - DISABLED to prevent errors
-      /*
-      chrome.notifications.create('focus-activated', {
-        type: 'basic',
-        title: 'Focus Mode Activated',
-        message: state.manualFocus ? 'Manual focus mode enabled.' : `Meeting started: ${current.summary}. Distractions blocked.`
-      }, (notificationId) => {
-        if (chrome.runtime.lastError) {
-          console.error('Notification error:', chrome.runtime.lastError.message);
-        }
-      });
-      */
-    } else {
-      // Already blocking, but maybe source changed?
-      if (state.manualFocus && state.currentEvent.summary !== "Manual Focus Session") {
-         state.currentEvent = { 
-           summary: "Manual Focus Session", 
-           start: new Date().toISOString(),
-           end: null 
-         };
-      } else if (!state.manualFocus && isCalendarActive && state.currentEvent.summary === "Manual Focus Session") {
-         state.currentEvent = { summary: current.summary, end: current.end };
-      }
-    }
-  } else {
-    if (state.isBlocking) {
-      // Stop Blocking
-      state.isBlocking = false;
-      state.currentEvent = null;
-      updateBlockingRules(false);
-      
-      // Notification disabled to prevent errors
-      /*
-      chrome.notifications.create('focus-deactivated', {
-        type: 'basic',
-        title: 'Focus Mode Deactivated',
-        message: `You are free to roam.`
-      }, (notificationId) => {
-        if (chrome.runtime.lastError) {
-          console.error('Notification error:', chrome.runtime.lastError.message);
-        }
-      });
-      */
-    }
-  }
-
-  if (next) {
-    state.nextEvent = {
-      summary: next.summary,
-      time: new Date(next.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-  } else {
-    state.nextEvent = null;
-  }
-  
-  // Update stats (mocked increment)
-  // Update stats
-  if (state.isBlocking) {
-    // Add 1 minute to focus time (since this runs every minute)
-    if (!state.stats.focusTimeMinutes) state.stats.focusTimeMinutes = 0;
-    state.stats.focusTimeMinutes++;
-    
-    // Format for display
-    const hours = Math.floor(state.stats.focusTimeMinutes / 60);
-    const mins = state.stats.focusTimeMinutes % 60;
-    state.stats.focusTime = `${hours}h ${mins}m`;
-    
-    // Save to storage
-    chrome.storage.local.set({ stats: state.stats });
-  }
-}
-
-async function fetchGoogleCalendarEvents() {
-  try {
-    const token = await getAuthToken();
-    
-    // Get events from now to 24 hours from now
-    const now = new Date();
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    
-    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
-      `timeMin=${now.toISOString()}&` +
-      `timeMax=${tomorrow.toISOString()}&` +
-      `singleEvents=true&` +
-      `orderBy=startTime`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      console.error('Calendar API error:', response.status, response.statusText);
-      return [];
-    }
-    
-    const data = await response.json();
-    
-    // Transform to our format
-    return (data.items || []).map(event => ({
-      summary: event.summary || 'Busy',
-      start: event.start.dateTime || event.start.date,
-      end: event.end.dateTime || event.end.date
-    }));
-  } catch (error) {
-    console.error('Failed to fetch calendar events:', error);
-    return [];
-  }
-}
-
-function getMockEvents() {
-  const now = new Date();
-  // Create a mock meeting happening NOW
-  const start = new Date(now.getTime() - 5 * 60000); // Started 5 mins ago
-  const end = new Date(now.getTime() + 2 * 60000); // Ends in 2 mins from NOW
-  
-  const nextStart = new Date(now.getTime() + 60 * 60000);
-  const nextEnd = new Date(nextStart.getTime() + 30 * 60000);
-
-  return [
-    {
-      summary: "Deep Work Session",
-      start: start.toISOString(),
-      end: end.toISOString()
-    },
-    {
-      summary: "Team Sync",
-      start: nextStart.toISOString(),
-      end: nextEnd.toISOString()
-    }
-  ];
-}
 
 // Blocking Logic
 function updateBlockingRules(enable) {
@@ -409,5 +195,49 @@ function updateBlockingRules(enable) {
         console.log('Blocking rules disabled successfully');
       }
     });
+  }
+}
+// Calendar Logic (Simplified for Manual Focus Only)
+function checkCalendarStatus() {
+  // Only Manual Focus is supported now
+  const shouldBlock = state.manualFocus;
+
+  if (shouldBlock) {
+    if (!state.isBlocking) {
+      // Start Blocking
+      state.isBlocking = true;
+      state.currentEvent = { 
+        summary: "Manual Focus Session", 
+        start: new Date().toISOString(),
+        end: null 
+      };
+      
+      console.log('Starting focus mode blocking. Manual:', state.manualFocus);
+      updateBlockingRules(true);
+    }
+  } else {
+    if (state.isBlocking) {
+      // Stop Blocking
+      state.isBlocking = false;
+      state.currentEvent = null;
+      updateBlockingRules(false);
+    }
+  }
+
+  state.nextEvent = null;
+  
+  // Update stats
+  if (state.isBlocking) {
+    // Add 1 minute to focus time (since this runs every minute)
+    if (!state.stats.focusTimeMinutes) state.stats.focusTimeMinutes = 0;
+    state.stats.focusTimeMinutes++;
+    
+    // Format for display
+    const hours = Math.floor(state.stats.focusTimeMinutes / 60);
+    const mins = state.stats.focusTimeMinutes % 60;
+    state.stats.focusTime = `${hours}h ${mins}m`;
+    
+    // Save to storage
+    chrome.storage.local.set({ stats: state.stats });
   }
 }
